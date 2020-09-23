@@ -1,8 +1,15 @@
 import React from "react";
+// import LandingPage from "./LandingPage";
+import LoginPage from "./loginpage/LoginPage";
 
 class App extends React.Component {
   render() {
-    return <div>Community Forum App</div>;
+    return (
+      <>
+        {/* <LandingPage /> */}
+        <LoginPage />
+      </>
+    );
   }
 }
 
