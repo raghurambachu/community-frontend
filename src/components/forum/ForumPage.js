@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
 import Header from "../general/Header";
 import Question from "./Question";
@@ -15,7 +15,7 @@ class ForumPage extends React.Component {
   }
 
   componentDidMount() {
-    const url = "/api/questions";
+    const url = `${process.env.REACT_APP_URL}/api/questions`;
     fetch(url)
       .then((res) => res.json())
       .then((questions) => {
@@ -52,20 +52,20 @@ class ForumPage extends React.Component {
           updateUsername={this.props.updateUsername}
         ></Header>
         <main className="container mx-auto my-8 pt-16">
-          <ul className="type flex space-x-6 text-lg">
+          {/* <ul className="type flex space-x-6 text-lg">
             <li>
-              {/* <a href="/">Latest</a> */}
+              
               <Link to="/questions">Latest</Link>
             </li>
             <li>
-              {/* <a href="/">Popular</a> */}
+          
               <Link to="/questions">Popular</Link>
             </li>
             <li>
-              {/* <a href="/">Categories</a> */}
+             
               <Link to="/questions">Categories</Link>
             </li>
-          </ul>
+          </ul> */}
 
           <section className="grid grid-cols-4 gap-16 my-6 text-gray-700">
             <div className="questions col-span-3">

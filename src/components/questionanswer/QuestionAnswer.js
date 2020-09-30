@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "../general/Header";
 import { getFormattedDate } from "../../utils/utils";
+import { Link } from "react-router-dom";
 import hljs from "highlight.js";
 import "highlight.js/styles/darcula.css";
 
@@ -17,11 +18,6 @@ class QuestionAnswer extends React.Component {
   constructor() {
     super();
     // markup and text properties are associated with posting an answer
-    this.handleQuillChange = this.handleQuillChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleDelete = this.handleDelete.bind(this);
-    this.handleUpvote = this.handleUpvote.bind(this);
-    this.handleDownvote = this.handleDownvote.bind(this);
     this.state = {
       question: null,
       answers: [],
@@ -29,16 +25,21 @@ class QuestionAnswer extends React.Component {
       text: "",
       error: "",
     };
+    this.handleQuillChange = this.handleQuillChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
+    this.handleUpvote = this.handleUpvote.bind(this);
+    this.handleDownvote = this.handleDownvote.bind(this);
   }
   componentDidMount() {
     const slug = this.props.match.params.slug;
-    fetch(`http://localhost:3000/api/questions/${slug}`)
+    fetch(`${process.env.REACT_APP_URL}/api/questions/${slug}`)
       .then((res) => res.json())
       .then((question) => {
-        console.log(question.question.answers);
+        console.log(question.question);
         this.setState({
           question: question.question,
-          answers: question.question.answers,
+          answers: question?.question?.answers,
         });
       });
   }
@@ -50,7 +51,7 @@ class QuestionAnswer extends React.Component {
   handleSubmit(e) {
     e.preventDefault();
     fetch(
-      `http://localhost:3000/api/questions/${this.state.question._id}/answers`,
+      `${process.env.REACT_APP_URL}/api/questions/${this.state.question._id}/answers`,
       {
         method: "POST",
         headers: {
@@ -81,7 +82,7 @@ class QuestionAnswer extends React.Component {
 
   handleDelete(answerId) {
     console.log(answerId);
-    fetch(`http://localhost:3000/api/answers/${answerId}`, {
+    fetch(`${process.env.REACT_APP_URL}/api/answers/${answerId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -107,7 +108,7 @@ class QuestionAnswer extends React.Component {
   }
 
   handleUpvote(answerId) {
-    fetch(`http://localhost:3000/api/answers/${answerId}/upvote`, {
+    fetch(`${process.env.REACT_APP_URL}/api/answers/${answerId}/upvote`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -120,8 +121,19 @@ class QuestionAnswer extends React.Component {
         if (res.error) {
           this.setState({ error: res.error });
         } else {
+          let answers = this.state.answers.map((answer) => answer);
+          if (res.existsInDownvotes) {
+            answers = answers.map((answer) => {
+              if (answer.downvotes.includes(res.userId)) {
+                answer.downvotes = answer.downvotes.filter(
+                  (downVoter) => downVoter !== res.userId
+                );
+              }
+              return answer;
+            });
+          }
           if (!res.alreadyExists) {
-            const answers = this.state.answers.map((answer) => {
+            answers = answers.map((answer) => {
               if (answer._id.toString() === res.answerId.toString()) {
                 return { ...answer, upvotes: [...answer.upvotes, res.userId] };
               }
@@ -138,7 +150,7 @@ class QuestionAnswer extends React.Component {
   }
 
   handleDownvote(answerId) {
-    fetch(`http://localhost:3000/api/answers/${answerId}/downvote`, {
+    fetch(`${process.env.REACT_APP_URL}/api/answers/${answerId}/downvote`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -150,8 +162,20 @@ class QuestionAnswer extends React.Component {
         if (res.error) {
           this.setState({ error: res.error });
         } else {
+          let answers = this.state.answers.map((answer) => answer);
+          if (res.existsInUpvotes) {
+            answers = answers.map((answer) => {
+              if (answer.upvotes.includes(res.userId)) {
+                answer.upvotes = answer.upvotes.filter(
+                  (upVoter) => upVoter !== res.userId
+                );
+              }
+              return answer;
+            });
+          }
+
           if (!res.alreadyExists) {
-            const answers = this.state.answers.map((answer) => {
+            answers = answers.map((answer) => {
               if (answer._id.toString() === res.answerId.toString()) {
                 return {
                   ...answer,
@@ -192,11 +216,19 @@ class QuestionAnswer extends React.Component {
                 <h2 className="text-2xl font-bold">
                   {this.state.question.title}
                 </h2>
-                <div className="mb-4">
+                <div className="mb-4 flex justify-between">
                   <small>
                     Asked on: {getFormattedDate(this.state.question.createdAt)}{" "}
                     | By : {this.state.question.author.username}
                   </small>
+                  {this.state.question.author.username ===
+                    localStorage.username && (
+                    <Link to={`/questions/edit/${this.state.question.slug}`}>
+                      <span className="btn text-xs cursor-pointer text-blue-100 bg-blue-300 hover:bg-blue-400">
+                        Edit Question
+                      </span>
+                    </Link>
+                  )}
                 </div>
                 <div
                   className="question-markup"
@@ -208,7 +240,7 @@ class QuestionAnswer extends React.Component {
                   }}
                 ></div>
                 <div className="tags flex space-x-2">
-                  {this.state.question.tags.map((tag, i) => (
+                  {this.state.question.tags[0].split(",").map((tag, i) => (
                     <span
                       key={i}
                       className="block px-2 bg-blue-300 text-blue-100"
@@ -223,7 +255,7 @@ class QuestionAnswer extends React.Component {
           <div className="answer-container grid grid-cols-3 mt-6">
             <div className="col-span-2">
               <h2 className="text-xl font-bold mb-8">
-                {this.state.answers.length} answers{" "}
+                {this.state.answers?.length} answers
               </h2>
               <ul className="mb-8">
                 {this.state.answers &&
@@ -260,7 +292,7 @@ class QuestionAnswer extends React.Component {
                         {this.props.username === answer.author.username && (
                           <div className="absolute right-0 top-0 -mt-8 space-x-4 z-10">
                             <button
-                              className="text-xs btn py-1 bg-blue-300 text-blue-100 hover:text-blue-500"
+                              className="text-xs btn py-1 bg-blue-300 text-blue-100 hover:cursor-pointer hover:text-blue-500"
                               to="/"
                             >
                               Edit

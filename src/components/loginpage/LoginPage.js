@@ -3,6 +3,16 @@ import { Link } from "react-router-dom";
 import { FiMail } from "react-icons/fi";
 import { BiLockOpenAlt } from "react-icons/bi";
 
+function axios(url, data) {
+  return fetch(process.env.REACT_APP_URL + url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  }).then((res) => res.json());
+}
+
 class LoginPage extends React.Component {
   constructor() {
     super();
@@ -19,31 +29,23 @@ class LoginPage extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    fetch("api/users/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ user: this.state }),
-    })
-      .then((res) => res.json())
-      .then((user) => {
-        if (user.user && user.user.email) {
-          localStorage.setItem("authToken", user.user.token);
-          this.props.handleIsLoggedIn(true);
-          console.log("Username", user.user.username);
-          localStorage.setItem("username", user.user.username);
-          this.props.updateUsername(user.user.username);
-          console.log(this.props.returnTo);
-          console.log(this.props.history);
-          this.props.history.push(
-            !this.props.returnTo ? "/questions" : this.props.returnTo
-          );
-        } else {
-          this.setState({ email: "", password: "" });
-          this.props.history.push("/login");
-        }
-      });
+    axios(`/api/users/login`, { user: this.state }).then((user) => {
+      if (user?.user?.email) {
+        localStorage.setItem("authToken", user.user.token);
+        this.props.handleIsLoggedIn(true);
+        console.log("Username", user.user.username);
+        localStorage.setItem("username", user.user.username);
+        this.props.updateUsername(user.user.username);
+        console.log(this.props.returnTo);
+        console.log(this.props.history);
+        this.props.history.push(
+          !this.props.returnTo ? "/questions" : this.props.returnTo
+        );
+      } else {
+        this.setState({ email: "", password: "" });
+        this.props.history.push("/login");
+      }
+    });
   }
 
   render() {
@@ -83,7 +85,7 @@ class LoginPage extends React.Component {
                 </div>
                 <input
                   className=" w-full py-3 px-4 rounded-tr-md outline-none border-b-2 border-gray-400 focus-within:border-blue-500 transition duration-200 ease-in-out"
-                  type="text"
+                  type="password"
                   placeholder="Password"
                   name="password"
                   value={this.state.password}

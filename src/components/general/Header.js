@@ -1,10 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 function NavAfterLogin(props) {
   return (
     <nav>
-      <ul className="nav-list flex">
+      <ul className="nav-list flex items-center">
+        <li>
+          <NavLink
+            activeClassName="bg-blue-500 text-blue-200 px-4 py-1 font-bold  text-lg rounded-md  hover:text-blue-300 "
+            to="/questions"
+          >
+            Questions
+          </NavLink>
+        </li>
         <li className="nav-item ml-4">
           <button
             onClick={() => {

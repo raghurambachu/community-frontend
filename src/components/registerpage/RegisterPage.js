@@ -20,7 +20,7 @@ class RegisterPage extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    fetch("api/users/register", {
+    fetch(`${process.env.REACT_APP_URL}/api/users/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

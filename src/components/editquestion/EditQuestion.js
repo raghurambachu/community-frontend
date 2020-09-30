@@ -7,11 +7,13 @@ import "highlight.js/styles/darcula.css";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
+// import { axios } from "../../utils/utils";
+
 hljs.configure({
   languages: ["javascript", "html"],
 });
 
-class CreateQuestion extends React.Component {
+class EditQuestion extends React.Component {
   constructor() {
     super();
     this.state = {
@@ -26,28 +28,48 @@ class CreateQuestion extends React.Component {
     this.handleQuillChange = this.handleQuillChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
+  componentDidMount() {
+    // url,method,data,auth
+    const { slug } = this.props.match.params;
+    // console.log(
+    //   axios(
+    //     `/questions/${slug}`,
+    //     "GET",
+    //     null,
+    //     localStorage.authToken
+    //   ).then((res) => console.log(res))
+    // );
+    fetch(`${process.env.REACT_APP_URL}/api/questions/${slug}`)
+      .then((res) => res.json())
+      .then(({ question }) => this.setState({ ...question }));
+  }
   handleSubmit(e) {
     e.preventDefault();
-    fetch(`${process.env.REACT_APP_URL}/api/questions`, {
-      method: "POST",
+    const { slug } = this.props.match.params;
+
+    fetch(`${process.env.REACT_APP_URL}/api/questions/${slug}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         authorization: localStorage.getItem("authToken"),
       },
       body: JSON.stringify({
         question: {
-          ...this.state,
+          category: this.state.category,
           description: this.state.desc,
-          tags: this.state.tags.split(",").map((tag) => tag.trim()),
+          markup: this.state.markup,
+          title: this.state.title,
+          tags: this.state.tags,
         },
       }),
     })
       .then((res) => res.json())
       .then((res) => {
+        console.log(res);
         if (res.question) {
-          this.props.history.push("/questions");
+          this.props.history.push(`/questions/${slug}`);
         } else {
-          this.setState({ error: res.error, title: "" });
+          this.setState({ error: res.error });
         }
       });
   }
@@ -70,8 +92,8 @@ class CreateQuestion extends React.Component {
           updateUsername={this.props.updateUsername}
         />
         <div className="container mx-auto  pt-16 md:px-16 lg:px-0 ">
-          <h2 className="my-8 mb-4 text-3xl font-bold">Ask a question?</h2>
-          <p className="error text-red-400 mb-4">{this.state.error}</p>
+          <h2 className="my-8 mb-4 text-3xl font-bold">Edit a question?</h2>
+          <p className="error text-red-400 mb-4">{this.state?.error}</p>
           <div className="grid grid-cols-3 gap-8">
             <section className="col-span-2 ">
               <article className="create-question rounded-md shadow-md p-4 bg-blue-100">
@@ -90,6 +112,7 @@ class CreateQuestion extends React.Component {
                       name="title"
                       value={this.state.title}
                       onChange={this.handleInput}
+                      disabled={true}
                       id="title"
                       placeholder="eg. Is there any cheat sheet for VS Code?"
                     />
@@ -105,8 +128,8 @@ class CreateQuestion extends React.Component {
                         className="h-48 "
                         value={this.state.markup}
                         onChange={this.handleQuillChange}
-                        modules={CreateQuestion.modules}
-                        formats={CreateQuestion.formats}
+                        modules={EditQuestion.modules}
+                        formats={EditQuestion.formats}
                       />
                     </div>
                     <h3 className="md:mt-4 lg:mt-0">Output:</h3>
@@ -156,7 +179,7 @@ class CreateQuestion extends React.Component {
   }
 }
 
-CreateQuestion.modules = {
+EditQuestion.modules = {
   syntax: {
     highlight: (text) => hljs.highlightAuto(text).value,
   },
@@ -180,7 +203,7 @@ CreateQuestion.modules = {
   },
 };
 
-CreateQuestion.formats = [
+EditQuestion.formats = [
   "header",
   "font",
   "size",
@@ -196,4 +219,4 @@ CreateQuestion.formats = [
   "code-block",
 ];
 
-export default CreateQuestion;
+export default EditQuestion;
